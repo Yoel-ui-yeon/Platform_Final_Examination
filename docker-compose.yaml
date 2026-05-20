@@ -1,0 +1,52 @@
+services:
+  platform_docker-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lebaye-app
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@platform_docker-db:3306/${MYSQL_DATABASE}?serverVersion=8.0.32&charset=utf8mb4
+    depends_on:
+      - platform_docker-db
+    networks:
+      - platform-network
+
+  platform_docker-db:
+    image: mysql:8.0
+    container_name: lebaye-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3308:3306"
+    volumes:
+      - platform-db-data:/var/lib/mysql
+    networks:
+      - platform-network
+    
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: lebaye-phpmyadmin
+    environment:
+      PMA_HOST: platform_docker-db
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "8080:80"
+    depends_on:
+      - platform_docker-db
+    networks:
+      - platform-network
+
+volumes:
+  platform-db-data:
+
+networks:
+  platform-network:
